@@ -16,6 +16,7 @@ namespace MortgageLibrary
         public double totalInterestPaid { get; private set; }
         public int month { get; private set; }
         public double totalPrincipalPaid => originalLoanAmount - remainingLoanAmount;
+        private readonly double _monthlyInterestRate;
 
 
 
@@ -25,6 +26,7 @@ namespace MortgageLibrary
             this.remainingLoanAmount = loanAmount;
             this.interestRate = interestRate;
             this.loanTerm = loanTerm;
+            this._monthlyInterestRate = interestRate / 1200;
             this.minMonthlyPayment = CalculateMinMonthlyPayment();
             this.totalInterestPaid = 0;
             this.month = 1;
@@ -33,30 +35,34 @@ namespace MortgageLibrary
         private double CalculateMinMonthlyPayment()
         {
             // Calculate the monthly payment
-            double IR = this.interestRate / 1200;
-            double totalMonthlyPayment = (this.originalLoanAmount * IR) / (1 - Math.Pow((1 + IR), (-this.loanTerm)));
+            
+            double totalMonthlyPayment = (this.originalLoanAmount * this._monthlyInterestRate) / (1 - Math.Pow((1 + this._monthlyInterestRate), (-this.loanTerm)));
             return totalMonthlyPayment;
         }
         private void UpdateRemainingBalance(double principalPayment)
         {
-            // Calculate the remaining balance
+            // Update the remaining balance
             this.remainingLoanAmount -= principalPayment;
         }
         private void UpdateTotalInterestPaid(double interestPayment)
         {
-            // Calculate the total interest paid
+            // Update the total interest paid
             this.totalInterestPaid += interestPayment;
         }
         private double CalculateInterestPayment()
         {
             // Calculate the interest payment
-            double interestPayment = this.remainingLoanAmount * (this.interestRate / 1200);
-            return interestPayment;
+            return this.remainingLoanAmount * this._monthlyInterestRate;
+           
         }
         private double CalculatePrincipalPayment(double totalMonthlyPayment, double interestPayment)
         {
             // Calculate the principal payment
+
             double principalPayment = totalMonthlyPayment - interestPayment;
+            if (this.remainingLoanAmount < principalPayment) {
+                principalPayment = this.remainingLoanAmount;
+            }
             return principalPayment;
         }
 
@@ -64,6 +70,11 @@ namespace MortgageLibrary
         public void MakePayment(double payment)
         {
             // Calculate the monthly payment
+            if (payment <= 0)
+            {
+                throw new ArgumentException("Payment must be greater than zero.");
+            }
+
             if (payment < Math.Round(this.minMonthlyPayment,2))
             {
                 throw new ArgumentException("Monthly payment is less than the minimum monthly payment.");
