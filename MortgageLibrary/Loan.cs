@@ -107,7 +107,7 @@ namespace MortgageLibrary
             double totalPrincipalPaid = this.totalPrincipalPaid;
             int month = this.month;
 
-            while (remainingBalance > 0.001)
+            while (remainingBalance > 0)
             {
                 double interestPayment = remainingBalance * (this.interestRate / 1200);
                 if (totalMonthlyPayment > remainingBalance + interestPayment)
@@ -138,6 +138,45 @@ namespace MortgageLibrary
             return loanDetailsList;
 
             //Console.WriteLine($"Total Interest Paid: {Math.Round(totalInterestPaid, 2)} - Total Principal Paid: {Math.Round(totalPrincipalPaid, 2)}");
+        }
+
+
+        public void SetCurrentLoanState(int month, double totalInterestPaid, double totalPrincipalPaid)
+        {
+            if (month < 1 || month >= loanTerm)
+            {
+                throw new ArgumentException("Month invalid.");
+            }
+            if (totalInterestPaid < 0 || totalPrincipalPaid < 0)
+            {
+                throw new ArgumentException("Invalid money inputs.");
+            }
+            this.month = month;
+            this.totalInterestPaid = totalInterestPaid;
+            this.remainingLoanAmount = this.originalLoanAmount - totalPrincipalPaid;
+        
+        }
+
+        public int CalculateRemainingMonthsForMinPayment()
+        {
+            int remainingMonths = 0;
+            double remainingBalance = this.remainingLoanAmount;
+
+            while (remainingBalance > 0 && remainingMonths < (loanTerm - this.month))
+            {
+                double interestPayment = remainingBalance * this._monthlyInterestRate;
+                double principalPayment = this.minMonthlyPayment - interestPayment;
+
+                if (principalPayment > remainingBalance)
+                {
+                    principalPayment = remainingBalance;
+                }
+
+                remainingBalance -= principalPayment;
+                remainingMonths++;
+            }
+
+            return remainingMonths;
         }
 
 
